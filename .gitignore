@@ -1,0 +1,32 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Environment files with secrets
+.env.local
+
+# IDE/Editor
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmpclaude-*
+*.tmp
+
+# Claude settings
+.claude
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Playwright
+.playwright-mcp
+
+# Sample PDFs (user-specific)
+*.pdf
