@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved status messages to show page progress
 - Updated uploader UI to indicate support for images
 
+### Security
+- **API key protection** - Moved Gemini API calls to Vercel serverless function
+- API key now stays server-side only (not exposed to browser)
+
 ## [1.0.0] - 2025-01-13
 
 ### Added
