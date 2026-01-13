@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-13
+
 ### Added
 - Multi-page PDF support with page-by-page analysis
 - Page separators in extracted text display (`── עמוד X ──`)
@@ -14,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Progress indicator showing current page during analysis
 - **Image file support** - now accepts JPG, PNG, WebP, GIF in addition to PDF
 - Dynamic upload icon based on file type (📄 for PDF, 🖼️ for images)
+- **History storage** - Automatically saves uploaded files and results using Vercel Blob + KV
+- Save status indicator showing when results are saved
+- Version number display in UI header
 
 ### Changed
 - Switched from Claude to Gemini 2.0 Flash as the default AI engine

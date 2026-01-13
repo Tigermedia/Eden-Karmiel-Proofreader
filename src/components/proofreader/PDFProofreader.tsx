@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { ProofreadingReport, ProcessingStatus, DateValidationResult, ProofreadingIssue, MemorialEntry } from '../../types/proofreader';
 import { pdfToImages, createPreviewUrl, revokePreviewUrl } from '../../utils/pdfToImage';
 import { proofreadImageWithGemini, isGeminiConfigured } from '../../services/gemini';
+import { saveResult, blobToBase64ForStorage } from '../../services/history';
 import { validateDateConsistency } from '../../utils/hebrewDateValidator';
 import { PDFUploader } from './PDFUploader';
 import { ProofreadingReport as ReportDisplay } from './ProofreadingReport';
@@ -16,6 +17,7 @@ export function PDFProofreader() {
   const [report, setReport] = useState<ProofreadingReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const processFile = useCallback(async (file: File) => {
     setError(null);
@@ -130,6 +132,31 @@ export function PDFProofreader() {
       setStatus('completed');
       setStatusMessage('הבדיקה הושלמה!');
 
+      // Save result to history (in background)
+      setSaveStatus('saving');
+      try {
+        const fileBase64 = await blobToBase64ForStorage(file);
+        const saveResponse = await saveResult(
+          file.name,
+          fileBase64,
+          file.type,
+          {
+            extractedText: newReport.extractedText,
+            issues: newReport.issues,
+          }
+        );
+        if (saveResponse.success) {
+          setSaveStatus('saved');
+          console.log('Result saved with ID:', saveResponse.id);
+        } else {
+          setSaveStatus('error');
+          console.error('Failed to save result:', saveResponse.error);
+        }
+      } catch (saveErr) {
+        setSaveStatus('error');
+        console.error('Save error:', saveErr);
+      }
+
     } catch (err) {
       console.error('Processing error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
@@ -145,6 +172,7 @@ export function PDFProofreader() {
     setStatusMessage('');
     setReport(null);
     setError(null);
+    setSaveStatus('idle');
   };
 
   const isProcessing = status === 'converting' || status === 'analyzing' || status === 'validating';
@@ -228,9 +256,17 @@ export function PDFProofreader() {
               <div className="card" style={{ height: '100%' }}>
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ margin: 0 }}>תצוגת המסמך ({previewUrls.length} {previewUrls.length === 1 ? 'עמוד' : 'עמודים'})</h3>
-                  <button className="btn btn-secondary" onClick={handleReset} style={{ padding: '0.5rem 1rem' }}>
-                    בדוק קובץ אחר
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {saveStatus === 'saving' && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>שומר...</span>
+                    )}
+                    {saveStatus === 'saved' && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--success-color)' }}>נשמר בהיסטוריה</span>
+                    )}
+                    <button className="btn btn-secondary" onClick={handleReset} style={{ padding: '0.5rem 1rem' }}>
+                      בדוק קובץ אחר
+                    </button>
+                  </div>
                 </div>
                 <div className="card-body" style={{ padding: '1rem', overflow: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
                   {previewUrls.map((url, index) => (
