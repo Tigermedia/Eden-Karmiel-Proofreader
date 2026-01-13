@@ -6,6 +6,10 @@ import { validateDateConsistency } from '../../utils/hebrewDateValidator';
 import { PDFUploader } from './PDFUploader';
 import { ProofreadingReport as ReportDisplay } from './ProofreadingReport';
 
+function isImageFile(file: File): boolean {
+  return file.type.startsWith('image/');
+}
+
 export function PDFProofreader() {
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
@@ -28,21 +32,34 @@ export function PDFProofreader() {
     }
 
     try {
-      // Step 1: Convert PDF to images
-      setStatus('converting');
-      setStatusMessage('ממיר PDF לתמונות...');
+      let images: Blob[];
+      let totalPages: number;
 
-      const conversionResult = await pdfToImages(file);
-      if (!conversionResult.success || !conversionResult.images?.length) {
-        throw new Error(conversionResult.error || 'Failed to convert PDF');
+      // Step 1: Get images (either from PDF conversion or direct image file)
+      if (isImageFile(file)) {
+        // Direct image file - use as-is
+        setStatus('converting');
+        setStatusMessage('מכין תמונה לניתוח...');
+        images = [file];
+        totalPages = 1;
+        console.log('Image file loaded directly');
+      } else {
+        // PDF file - convert to images
+        setStatus('converting');
+        setStatusMessage('ממיר PDF לתמונות...');
+
+        const conversionResult = await pdfToImages(file);
+        if (!conversionResult.success || !conversionResult.images?.length) {
+          throw new Error(conversionResult.error || 'Failed to convert PDF');
+        }
+        images = conversionResult.images;
+        totalPages = images.length;
+        console.log(`PDF conversion complete: ${totalPages} page(s)`);
       }
 
       // Create preview URLs for all pages
-      const previews = conversionResult.images.map(img => createPreviewUrl(img));
+      const previews = images.map(img => createPreviewUrl(img));
       setPreviewUrls(previews);
-
-      const totalPages = conversionResult.images.length;
-      console.log(`PDF conversion complete: ${totalPages} page(s)`);
 
       // Step 2: Analyze each page with Gemini
       setStatus('analyzing');
@@ -54,7 +71,7 @@ export function PDFProofreader() {
       for (let i = 0; i < totalPages; i++) {
         setStatusMessage(`מנתח טקסט עברי... (עמוד ${i + 1} מתוך ${totalPages})`);
 
-        const proofreadResult = await proofreadImageWithGemini(conversionResult.images[i]);
+        const proofreadResult = await proofreadImageWithGemini(images[i]);
         if (!proofreadResult.success) {
           throw new Error(proofreadResult.error || `Failed to analyze page ${i + 1}`);
         }

@@ -5,13 +5,26 @@ interface PDFUploaderProps {
   isProcessing: boolean;
 }
 
+const ACCEPTED_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+];
+
+function isValidFileType(file: File): boolean {
+  return ACCEPTED_TYPES.includes(file.type) || file.type.startsWith('image/');
+}
+
 export function PDFUploader({ onFileSelect, isProcessing }: PDFUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (file: File | null) => {
-    if (file && file.type === 'application/pdf') {
+    if (file && isValidFileType(file)) {
       setSelectedFile(file);
       onFileSelect(file);
     }
@@ -45,16 +58,19 @@ export function PDFUploader({ onFileSelect, isProcessing }: PDFUploaderProps) {
     }
   };
 
+  const isImage = selectedFile?.type.startsWith('image/');
+  const uploadIcon = isImage ? '🖼️' : '📄';
+
   return (
     <div className="card">
       <div className="card-header">
-        <h2>העלאת קובץ PDF</h2>
+        <h2>העלאת קובץ לבדיקה</h2>
       </div>
       <div className="card-body">
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,image/*"
           onChange={handleInputChange}
           style={{ display: 'none' }}
           disabled={isProcessing}
@@ -67,7 +83,7 @@ export function PDFUploader({ onFileSelect, isProcessing }: PDFUploaderProps) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <div className="upload-icon">📄</div>
+          <div className="upload-icon">{uploadIcon}</div>
           {selectedFile ? (
             <>
               <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
@@ -80,10 +96,10 @@ export function PDFUploader({ onFileSelect, isProcessing }: PDFUploaderProps) {
           ) : (
             <>
               <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                גרור קובץ PDF לכאן או לחץ לבחירה
+                גרור קובץ לכאן או לחץ לבחירה
               </p>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                תומך בקבצי PDF בלבד
+                תומך ב-PDF ותמונות (JPG, PNG)
               </p>
             </>
           )}

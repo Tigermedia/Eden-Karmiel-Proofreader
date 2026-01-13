@@ -12,11 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Page separators in extracted text display (`── עמוד X ──`)
 - Page number labels in PDF preview for multi-page documents
 - Progress indicator showing current page during analysis
+- **Image file support** - now accepts JPG, PNG, WebP, GIF in addition to PDF
+- Dynamic upload icon based on file type (📄 for PDF, 🖼️ for images)
 
 ### Changed
 - Switched from Claude to Gemini 2.0 Flash as the default AI engine
 - Removed AI provider toggle - now uses Gemini exclusively
 - Improved status messages to show page progress
+- Updated uploader UI to indicate support for images
 
 ## [1.0.0] - 2025-01-13
 
